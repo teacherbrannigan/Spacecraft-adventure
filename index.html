@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Starship Escape — Emergency Protocol</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Three.js for 3D Cockpit Game & 360 Equirectangular Hangar -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- TOP HUD BAR -->
+  <header class="hud">
+    <div class="hud-left">
+      <span class="badge" id="ship-status-badge">STATUS: FUNCTIONAL</span>
+      <span class="timer" id="mission-timer">ELAPSED: 00:00 / 20:00 TARGET</span>
+    </div>
+    <div class="hud-center" id="current-room-title">EMERGENCY BRIDGE</div>
+    <div class="hud-right">
+      <button id="btn-back-bridge" class="btn btn-primary hidden" onclick="navigate('bridge')">
+        ⬅ RETURN TO BRIDGE
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main id="app-container">
+    
+    <!-- 1. BRIDGE -->
+    <section id="view-bridge" class="view active">
+      <div class="bridge-grid">
+        <div class="ship-monitor">
+          <h2>HULL DIAGNOSTIC TELEMETRY</h2>
+          <div class="image-frame">
+            <img id="ship-condition-img" src="assets/ship_functional.jpg" alt="Ship Condition" 
+                 onerror="this.src='https://placehold.co/900x500/0b1320/38bdf8?text=SHIP+CONDITION+DISPLAY'"/>
+            <div class="status-overlay" id="ship-condition-text">SYSTEMS NOMINAL</div>
+          </div>
+          <div class="checklist">
+            <div class="check-item" id="chk-maint">❌ Maintenance: Fuel & Control Lines</div>
+            <div class="check-item" id="chk-engine">❌ Engineering: 4 Engines Reset</div>
+            <div class="check-item" id="chk-cockpit">❌ Cockpit: Debris Field Navigation</div>
+            <div class="check-item" id="chk-hangar">❌ Hangar: Shuttle Launch</div>
+          </div>
+        </div>
+
+        <div class="nav-console">
+          <h2>DECK NAVIGATION</h2>
+          <p class="terminal-text">Select a compartment to dispatch crew:</p>
+          <button class="nav-btn" onclick="navigate('crew')">🛏️ CREW QUARTERS</button>
+          <button class="nav-btn" onclick="navigate('maintenance')">🔧 MAINTENANCE BAY</button>
+          <button class="nav-btn" onclick="navigate('engine')">⚡ ENGINE ROOM [LOCKED]</button>
+          <button class="nav-btn" onclick="navigate('cockpit')">🚀 FLIGHT COCKPIT</button>
+          <button class="nav-btn" onclick="navigate('hangar')">🛸 SHUTTLE HANGAR</button>
+          
+          <div class="debug-panel">
+            <small>GM / Testing Controls:</small>
+            <button class="btn-small" onclick="cycleShipCondition()">Cycle Hull Damage</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. CREW QUARTERS -->
+    <section id="view-crew" class="view">
+      <div class="panel">
+        <h2>CREW QUARTERS — PERSONAL LOGS & LOCKER</h2>
+        <div class="lore-box">
+          <h3>🔒 Chief Engineer's Note</h3>
+          <p>
+            "To prevent unauthorized reactor access during an emergency, the Engine Room bulkhead 
+            keypad code has been engraved onto the <strong>Code Cylinder</strong> resting on the bunk desk."
+          </p>
+          <div class="code-cylinder">
+            <span>PHYSICAL PROP / CODE CYLINDER INSPECT:</span>
+            <strong>ENGINE ACCESS CODE: 6494</strong>
+          </div>
+        </div>
+
+        <div class="lore-box">
+          <h3>📋 Shuttle Pre-Flight Startup Checklist</h3>
+          <p>Follow this exact switch sequence inside the Hangar Shuttle Cockpit:</p>
+          <ol class="sequence-list">
+            <li><strong>STEP 1:</strong> HYDRAULICS POWER (Overhead Left)</li>
+            <li><strong>STEP 2:</strong> FUEL SYSTEM VALVES (Overhead Right)</li>
+            <li><strong>STEP 3:</strong> MAIN THROTTLE LEVERS (Center Console)</li>
+            <li><strong>STEP 4:</strong> IGNITION & LAUNCH RELEASE (Right Panel)</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MAINTENANCE -->
+    <section id="view-maintenance" class="view">
+      <div class="panel">
+        <h2>MAINTENANCE — FLUID & CONTROL CONDUIT ROUTING</h2>
+        <p>Click pipe segments to rotate them. Reconnect all <strong>5 color-coded lines</strong> from Left Input to Right Output.</p>
+        <div class="legend">
+          <span style="color:#ef4444">■ Port Fuel</span>
+          <span style="color:#3b82f6">■ Starboard Fuel</span>
+          <span style="color:#22c55e">■ Port Controls</span>
+          <span style="color:#eab308">■ Starboard Controls</span>
+          <span style="color:#a855f7">■ Reverse Fuel Line</span>
+        </div>
+        <div id="pipe-grid" class="pipe-grid"></div>
+        <div id="maint-status" class="status-banner">STATUS: CONDUITS DISCONNECTED</div>
+      </div>
+    </section>
+
+    <!-- 4. ENGINE ROOM -->
+    <section id="view-engine" class="view">
+      <!-- Keypad Lock Screen -->
+      <div id="engine-lock-screen" class="panel center-box">
+        <h2>ENGINE ROOM BULKHEAD LOCKED</h2>
+        <p>Enter 4-Digit Code Cylinder Passcode:</p>
+        <input type="password" id="engine-passcode-input" maxlength="4" placeholder="••••" />
+        <button class="btn btn-primary" onclick="unlockEngineRoom()">UNLOCK BULKHEAD</button>
+        <p id="engine-lock-msg" class="error-text"></p>
+      </div>
+
+      <!-- Unlocked Engine Room -->
+      <div id="engine-room-content" class="panel hidden">
+        <h2>MAIN ENGINEERING — 4-ENGINE RESET PROTOCOL</h2>
+        <p>Connect the physical <strong>BBC micro:bit</strong> wire to the matching Engine Pin, then press <strong>Button A</strong> to dial the reset code (<strong>3 - 6 - 4 - 5</strong>). Wrong digits reset the sequence!</p>
+        
+        <div class="microbit-controls">
+          <button class="btn btn-primary" onclick="connectMicrobit()">🔌 CONNECT MICRO:BIT (USB SERIAL)</button>
+          <span id="mb-connection-status">Not Connected (Simulator Active)</span>
+        </div>
+
+        <div class="engine-displays">
+          <div class="engine-box" id="eng-0">ENGINE 1<br><span class="digit">-</span><br><small>Pin P0 (Target: 3)</small></div>
+          <div class="engine-box" id="eng-1">ENGINE 2<br><span class="digit">-</span><br><small>Pin P1 (Target: 6)</small></div>
+          <div class="engine-box" id="eng-2">ENGINE 3<br><span class="digit">-</span><br><small>Pin P2 (Target: 4)</small></div>
+          <div class="engine-box" id="eng-3">ENGINE 4<br><span class="digit">-</span><br><small>Pin P8 (Target: 5)</small></div>
+        </div>
+
+        <!-- On-screen Simulator for Testing Without Hardware -->
+        <div class="sim-controls">
+          <h4>On-Screen Micro:bit Simulator (If hardware is disconnected):</h4>
+          <label>Active Wire Pin:
+            <select id="sim-pin-select">
+              <option value="0">Pin P0 (Engine 1)</option>
+              <option value="1">Pin P1 (Engine 2)</option>
+              <option value="2">Pin P2 (Engine 3)</option>
+              <option value="3">Pin P8 (Engine 4)</option>
+            </select>
+          </label>
+          <button class="btn" onclick="simCycleDigit()">Press Button A (Cycle Digit)</button>
+          <button class="btn btn-primary" onclick="simConfirmDigit()">Press Button B / Lock Digit</button>
+        </div>
+
+        <div id="engine-status" class="status-banner">STATUS: ENGINES OFFLINE</div>
+      </div>
+    </section>
+
+    <!-- 5. COCKPIT (3D GAME) -->
+    <section id="view-cockpit" class="view">
+      <div class="panel">
+        <div class="cockpit-header">
+          <h2>FLIGHT COCKPIT — ASTEROID EVASION</h2>
+          <div id="cockpit-handling-status" class="badge">HANDLING: SLUGGISH (ENGINES OFFLINE)</div>
+        </div>
+        <p>Use <strong>LEFT / RIGHT / UP / DOWN Arrow Keys</strong> to survive for <strong>60 seconds</strong>. More than 5 crashes will damage the hull!</p>
+        <div class="cockpit-stats">
+          <span>TIME REMAINING: <strong id="cockpit-timer">60.0s</strong></span>
+          <span>CRASHES: <strong id="cockpit-crashes">0 / 5</strong></span>
+          <button class="btn btn-primary" id="btn-start-flight" onclick="startCockpitGame()">START EVASION RUN</button>
+        </div>
+        <div id="cockpit-canvas-container"></div>
+      </div>
+    </section>
+
+    <!-- 6. HANGAR (360 EQUIRECTANGULAR AR & VIDEO OUTCOMES) -->
+    <section id="view-hangar" class="view">
+      <div class="panel">
+        <h2>SHUTTLE HANGAR — 360° AR PRE-FLIGHT CONSOLE</h2>
+        <p>Drag to look around the cockpit. Click the <strong>4 interactive zones</strong> in the exact sequence listed in Crew Quarters.</p>
+        <div class="hangar-hud">
+          <span>SEQUENCE PROGRESS: <strong id="hangar-seq-display">[ _ , _ , _ , _ ]</strong></span>
+          <button class="btn-small" onclick="resetHangarSequence()">Reset Switches</button>
+        </div>
+        
+        <!-- 360 Interactive Viewer -->
+        <div id="hangar-360-container"></div>
+
+        <!-- Video Outcome Modal -->
+        <div id="hangar-video-modal" class="modal hidden">
+          <div class="modal-content">
+            <h2 id="outcome-title">LAUNCH SEQUENCE INITIATED</h2>
+            <p id="outcome-desc"></p>
+            <video id="outcome-video" controls autoplay width="100%"></video>
+            <div id="video-fallback-box" class="video-fallback hidden"></div>
+            <button class="btn btn-primary" onclick="closeVideoModal()">CLOSE FEED</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
