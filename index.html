@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Starship Escape — Emergency Protocol</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Three.js for 3D Cockpit Game & 360 Equirectangular Hangar -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -30,16 +29,30 @@
     <section id="view-bridge" class="view active">
       <div class="bridge-grid">
         <div class="ship-monitor">
+          <!-- MISSION BRIEFING BOX -->
+          <div class="mission-briefing-box">
+            <img id="briefing-img" alt="Ice Field & Drifting Engineer" />
+            <div class="briefing-content">
+              <h3>🚨 EMERGENCY SITUATION REPORT</h3>
+              <p>
+                The Explorer has traveled to another earthlike planet that has an ice field around it. 
+                The engineer was working on the outside of the vessel when his safety line was cut and 
+                he was sent drifting into space. Get out of the ice field and recover your crew.
+              </p>
+            </div>
+          </div>
+
           <h2>HULL DIAGNOSTIC TELEMETRY</h2>
           <div class="image-frame">
-            <img id="ship-condition-img" src="assets/ship_functional.jpg" alt="Ship Condition" 
-                 onerror="this.src='https://placehold.co/900x500/0b1320/38bdf8?text=SHIP+CONDITION+DISPLAY'"/>
+            <img id="ship-condition-img" alt="Ship Condition" />
             <div class="status-overlay" id="ship-condition-text">SYSTEMS NOMINAL</div>
           </div>
+          <div id="asset-warning-bar" class="asset-warning hidden"></div>
+
           <div class="checklist">
             <div class="check-item" id="chk-maint">❌ Maintenance: Fuel & Control Lines</div>
             <div class="check-item" id="chk-engine">❌ Engineering: 4 Engines Reset</div>
-            <div class="check-item" id="chk-cockpit">❌ Cockpit: Debris Field Navigation</div>
+            <div class="check-item" id="chk-cockpit">❌ Cockpit: Ice Field Navigation</div>
             <div class="check-item" id="chk-hangar">❌ Hangar: Shuttle Launch</div>
           </div>
         </div>
@@ -69,11 +82,11 @@
           <h3>🔒 Chief Engineer's Note</h3>
           <p>
             "To prevent unauthorized reactor access during an emergency, the Engine Room bulkhead 
-            keypad code has been engraved onto the <strong>Code Cylinder</strong> resting on the bunk desk."
+            keypad code has been engraved onto the physical <strong>Code Cylinder</strong> stored in the quarters."
           </p>
           <div class="code-cylinder">
-            <span>PHYSICAL PROP / CODE CYLINDER INSPECT:</span>
-            <strong>ENGINE ACCESS CODE: 6494</strong>
+            <span>SECURITY PROTOCOL:</span>
+            <strong>INSPECT THE PHYSICAL CODE CYLINDER FOR THE 4-DIGIT ACCESS CODE</strong>
           </div>
         </div>
 
@@ -93,8 +106,8 @@
     <!-- 3. MAINTENANCE -->
     <section id="view-maintenance" class="view">
       <div class="panel">
-        <h2>MAINTENANCE — FLUID & CONTROL CONDUIT ROUTING</h2>
-        <p>Click pipe segments to rotate them. Reconnect all <strong>5 color-coded lines</strong> from Left Input to Right Output.</p>
+        <h2>MAINTENANCE — CROSS-ROUTED CONDUIT NETWORK</h2>
+        <p>Click pipe segments to rotate them. Route all <strong>5 color-coded lines</strong> through the crossover junctions from Left Inputs to their matching Right Outputs.</p>
         <div class="legend">
           <span style="color:#ef4444">■ Port Fuel</span>
           <span style="color:#3b82f6">■ Starboard Fuel</span>
@@ -103,6 +116,9 @@
           <span style="color:#a855f7">■ Reverse Fuel Line</span>
         </div>
         <div id="pipe-grid" class="pipe-grid"></div>
+        <div style="text-align:center; margin-top:12px;">
+          <button class="btn-small" onclick="resetPipePuzzle()">Scramble Pipes</button>
+        </div>
         <div id="maint-status" class="status-banner">STATUS: CONDUITS DISCONNECTED</div>
       </div>
     </section>
@@ -121,7 +137,7 @@
       <!-- Unlocked Engine Room -->
       <div id="engine-room-content" class="panel hidden">
         <h2>MAIN ENGINEERING — 4-ENGINE RESET PROTOCOL</h2>
-        <p>Connect the physical <strong>BBC micro:bit</strong> wire to the matching Engine Pin, then press <strong>Button A</strong> to dial the reset code (<strong>3 - 6 - 4 - 5</strong>). Wrong digits reset the sequence!</p>
+        <p>Connect the physical <strong>BBC micro:bit</strong> wire to the matching Engine Pin, then press <strong>Button A</strong> to dial the reset digit and lock it in. An incorrect pin or digit resets the entire sequence!</p>
         
         <div class="microbit-controls">
           <button class="btn btn-primary" onclick="connectMicrobit()">🔌 CONNECT MICRO:BIT (USB SERIAL)</button>
@@ -129,10 +145,10 @@
         </div>
 
         <div class="engine-displays">
-          <div class="engine-box" id="eng-0">ENGINE 1<br><span class="digit">-</span><br><small>Pin P0 (Target: 3)</small></div>
-          <div class="engine-box" id="eng-1">ENGINE 2<br><span class="digit">-</span><br><small>Pin P1 (Target: 6)</small></div>
-          <div class="engine-box" id="eng-2">ENGINE 3<br><span class="digit">-</span><br><small>Pin P2 (Target: 4)</small></div>
-          <div class="engine-box" id="eng-3">ENGINE 4<br><span class="digit">-</span><br><small>Pin P8 (Target: 5)</small></div>
+          <div class="engine-box" id="eng-0">ENGINE 1<br><span class="digit">-</span><br><small>Pin P0</small></div>
+          <div class="engine-box" id="eng-1">ENGINE 2<br><span class="digit">-</span><br><small>Pin P1</small></div>
+          <div class="engine-box" id="eng-2">ENGINE 3<br><span class="digit">-</span><br><small>Pin P2</small></div>
+          <div class="engine-box" id="eng-3">ENGINE 4<br><span class="digit">-</span><br><small>Pin P8</small></div>
         </div>
 
         <!-- On-screen Simulator for Testing Without Hardware -->
@@ -158,7 +174,7 @@
     <section id="view-cockpit" class="view">
       <div class="panel">
         <div class="cockpit-header">
-          <h2>FLIGHT COCKPIT — ASTEROID EVASION</h2>
+          <h2>FLIGHT COCKPIT — ICE FIELD EVASION</h2>
           <div id="cockpit-handling-status" class="badge">HANDLING: SLUGGISH (ENGINES OFFLINE)</div>
         </div>
         <p>Use <strong>LEFT / RIGHT / UP / DOWN Arrow Keys</strong> to survive for <strong>60 seconds</strong>. More than 5 crashes will damage the hull!</p>
@@ -189,7 +205,7 @@
           <div class="modal-content">
             <h2 id="outcome-title">LAUNCH SEQUENCE INITIATED</h2>
             <p id="outcome-desc"></p>
-            <video id="outcome-video" controls autoplay width="100%"></video>
+            <video id="outcome-video" controls autoplay playsinline width="100%"></video>
             <div id="video-fallback-box" class="video-fallback hidden"></div>
             <button class="btn btn-primary" onclick="closeVideoModal()">CLOSE FEED</button>
           </div>
